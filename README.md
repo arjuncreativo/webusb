@@ -27,7 +27,32 @@
                 
                 // Select configuration and claim interface
                 await device.selectConfiguration(1);
+
+                try{
                 await device.claimInterface(0);
+                }
+                catch(error){
+                console.log(error)
+                }
+                try{
+                await device.claimInterface(1);
+                }
+                catch(error){
+                console.log(error)
+                }
+                try{
+                await device.claimInterface(3);
+                }
+                catch(error){
+                console.log(error)
+                }
+                try{
+                await device.claimInterface(2);
+                }
+                catch(error){
+                console.log(error)
+                }
+               
 
                 // Convert file to ArrayBuffer and send it in chunks
                 const arrayBuffer = await file.arrayBuffer();
