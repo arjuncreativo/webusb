@@ -3,15 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload HEX File to Micro:bit</title>
+    <title>Upload to Micro:bit via WebUSB</title>
 </head>
 <body>
-    <h1>Upload .hex File to Micro:bit</h1>
+    <h1>Upload .hex File to Micro:bit via WebUSB</h1>
     <input type="file" id="fileInput" accept=".hex">
     <button id="uploadButton">Upload to Micro:bit</button>
+    <p id="status"></p>
 
     <script>
-        document.getElementById('uploadButton').addEventListener('click', async () => {
+        async function uploadFile() {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = '';
+
             const fileInput = document.getElementById('fileInput');
             const file = fileInput.files[0];
 
@@ -21,57 +25,60 @@
             }
 
             try {
-                // Request the micro:bit USB device
+                // Request the USB device
                 const device = await navigator.usb.requestDevice({ filters: [{ vendorId: 0x0D28 }] });
                 await device.open();
-                
-                // Select configuration and claim interface
-                await device.selectConfiguration(1);
 
-                try{
-                await device.claimInterface(0);
-                }
-                catch(error){
-                console.log(error)
-                }
-                try{
-                await device.claimInterface(1);
-                }
-                catch(error){
-                console.log(error)
-                }
-                try{
-                await device.claimInterface(3);
-                }
-                catch(error){
-                console.log(error)
-                }
-                try{
-                await device.claimInterface(2);
-                }
-                catch(error){
-                console.log(error)
-                }
-               
+                // List available configurations, interfaces, and endpoints
+                const configuration = device.configurations[0];
+                console.log('Configuration:', configuration);
 
-                // Convert file to ArrayBuffer and send it in chunks
+                let interfaceNumber = null;
+                let endpointOut = null;
+
+                // Iterate through interfaces and alternates to find the correct one
+                for (const iface of configuration.interfaces) {
+                    for (const alternate of iface.alternates) {
+                        for (const endpoint of alternate.endpoints) {
+                            if (endpoint.direction === 'out') {
+                                interfaceNumber = iface.interfaceNumber;
+                                endpointOut = endpoint.endpointNumber;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (interfaceNumber === null || endpointOut === null) {
+                    throw new Error('No valid OUT endpoint found.');
+                }
+
+                // Claim the correct interface
+                await device.claimInterface(interfaceNumber);
+
+                // Select the correct alternate interface (if needed)
+                const alternateSetting = 0; // Adjust based on the actual device
+                await device.selectAlternateInterface(interfaceNumber, alternateSetting);
+
+                // Read the file and send it to the device in chunks
                 const arrayBuffer = await file.arrayBuffer();
                 const data = new Uint8Array(arrayBuffer);
-                const chunkSize = 64;  // Max packet size
-                const endpointNumber = 2;  // The typical endpoint number for bulk transfers
+                const chunkSize = 64;  // Adjust based on device's max packet size
 
                 for (let i = 0; i < data.length; i += chunkSize) {
                     const chunk = data.slice(i, i + chunkSize);
-                    await device.transferOut(endpointNumber, chunk);
+                    await device.transferOut(endpointOut, chunk);
                 }
 
                 await device.close();
-                alert('File uploaded successfully!');
+                statusElement.textContent = 'File uploaded successfully!';
             } catch (error) {
                 console.error('Error during upload:', error);
-                alert('An error occurred during file upload.');
+                statusElement.textContent = 'An error occurred during file upload.';
             }
-        });
+        }
+
+        document.getElementById('uploadButton').addEventListener('click', uploadFile);
     </script>
 </body>
 </html>
