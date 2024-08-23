@@ -29,36 +29,42 @@
                 const device = await navigator.usb.requestDevice({ filters: [{ vendorId: 0x0D28 }] });
                 await device.open();
 
-                // List available configurations, interfaces, and endpoints
+                // Log available configurations, interfaces, and endpoints
                 const configuration = device.configurations[0];
                 console.log('Configuration:', configuration);
 
                 let interfaceNumber = null;
                 let endpointOut = null;
 
-                // Iterate through interfaces and alternates to find the correct one
+                // Iterate through interfaces to find the correct one
                 for (const iface of configuration.interfaces) {
-                    for (const alternate of iface.alternates) {
-                        for (const endpoint of alternate.endpoints) {
-                            if (endpoint.direction === 'out') {
-                                interfaceNumber = iface.interfaceNumber;
-                                endpointOut = endpoint.endpointNumber;
-                                break;
+                    console.log(`Interface Number: ${iface.interfaceNumber}, Class: ${iface.descriptor.interfaceClass}`);
+                    if (iface.descriptor.interfaceClass === 2) { // Typically for CDC (Communications)
+                        interfaceNumber = iface.interfaceNumber;
+                        for (const alternate of iface.alternates) {
+                            for (const endpoint of alternate.endpoints) {
+                                if (endpoint.direction === 'out') {
+                                    endpointOut = endpoint.endpointNumber;
+                                    console.log(`Found OUT Endpoint: ${endpointOut}`);
+                                    break;
+                                }
                             }
                         }
                     }
                 }
 
                 if (interfaceNumber === null || endpointOut === null) {
-                    throw new Error('No valid OUT endpoint found.');
+                    throw new Error('No valid OUT endpoint found. Please check your USB device connection.');
                 }
 
                 // Claim the correct interface
                 await device.claimInterface(interfaceNumber);
+                console.log(`Claimed Interface Number: ${interfaceNumber}`);
 
-                // Select the correct alternate interface (if needed)
-                const alternateSetting = 0; // Adjust based on the actual device
+                // Select the correct alternate setting
+                const alternateSetting = 0; // Typically you might want to select the first alternate
                 await device.selectAlternateInterface(interfaceNumber, alternateSetting);
+                console.log(`Selected Alternate Setting: ${alternateSetting}`);
 
                 // Read the file and send it to the device in chunks
                 const arrayBuffer = await file.arrayBuffer();
