@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Micro:bit Python to HEX Generator</title>
+    <title>Micro:bit Python to HEX Generator V3</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -30,8 +30,8 @@
     <textarea id="pythonCode" placeholder="Write your Python code here..."></textarea>
     <button id="generateHexButton">Generate HEX File</button>
 
-    <!-- Include the microbit-micropython library via a CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/microbit-micropython"></script>
+    <!-- Include the microbit-micropython library -->
+    <script src="https://cdn.jsdelivr.net/npm/@microbit/micropython"></script>
 
     <script>
         document.getElementById("generateHexButton").addEventListener("click", async function() {
@@ -40,7 +40,7 @@
 
             try {
                 // Generate the HEX file using microbit-micropython
-                const hex = await MicrobitHex.generateHex(pythonCode);
+                const hex = await microbit.microPython.generateHex(pythonCode);
 
                 // Create a Blob from the hex string
                 const blob = new Blob([hex], { type: 'text/plain' });
