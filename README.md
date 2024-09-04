@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pharmacy Chat</title>
+    <title>Pharmacy Chat with Voice Notes</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -76,11 +76,15 @@
         <div class="chat-input-container">
             <input type="text" class="chat-input" id="chatInput" placeholder="Type a message..." />
             <button class="send-button" onclick="sendMessage()">Send</button>
-            <button class="voice-button" onclick="recordVoice()">🎤</button>
+            <button class="voice-button" id="voiceButton" onclick="toggleRecording()">🎤</button>
         </div>
     </div>
 
     <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+
         function sendMessage() {
             const input = document.getElementById('chatInput');
             const message = input.value.trim();
@@ -94,8 +98,48 @@
             }
         }
 
-        function recordVoice() {
-            alert("Voice recording functionality is not yet implemented.");
+        function toggleRecording() {
+            if (!isRecording) {
+                startRecording();
+            } else {
+                stopRecording();
+            }
+        }
+
+        function startRecording() {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    mediaRecorder.start();
+                    isRecording = true;
+                    document.getElementById('voiceButton').textContent = "⏹️"; // Change to stop icon
+
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        audioChunks = [];
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        const audio = document.createElement('audio');
+                        audio.src = audioUrl;
+                        audio.controls = true;
+
+                        const chatMessages = document.getElementById('chatMessages');
+                        chatMessages.appendChild(audio);
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    };
+                })
+                .catch(error => {
+                    console.error("Error accessing microphone:", error);
+                });
+        }
+
+        function stopRecording() {
+            mediaRecorder.stop();
+            isRecording = false;
+            document.getElementById('voiceButton').textContent = "🎤"; // Change back to mic icon
         }
     </script>
 
