@@ -84,18 +84,47 @@
         let mediaRecorder;
         let audioChunks = [];
         let isRecording = false;
+        const chatHistory = ["Show me all available medicines.", "What medicines are out of stock?"]; // Initial history
 
         function sendMessage() {
             const input = document.getElementById('chatInput');
-            const message = input.value.trim();
-            if (message) {
-                const chatMessages = document.getElementById('chatMessages');
-                const messageElement = document.createElement('div');
-                messageElement.textContent = message;
-                chatMessages.appendChild(messageElement);
-                input.value = '';
-                chatMessages.scrollTop = chatMessages.scrollHeight;
+            const query = input.value.trim();
+            if (query) {
+                const sessionId = "user-1234"; // Hardcoded session ID
+                const payload = {
+                    session_id: sessionId,
+                    query: query,
+                    history: chatHistory // Add previous chat history
+                };
+
+                // Send POST request to the Flask API
+                fetch('http://localhost:5000/chat/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    displayMessage(query); // Display the sent message
+                    displayMessage(data.response); // Display the response from server
+                    chatHistory.push(query); // Add the query to the history
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+
+                input.value = ''; // Clear the input field
             }
+        }
+
+        function displayMessage(message) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageElement = document.createElement('div');
+            messageElement.textContent = message;
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
         function toggleRecording() {
