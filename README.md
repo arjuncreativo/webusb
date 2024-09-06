@@ -107,8 +107,9 @@
                 })
                 .then(response => response.json())
                 .then(data => {
+                    console.log(data)
                     displayMessage(query); // Display the sent message
-                    displayMessage(data.response); // Display the response from server
+                    displayMessage(data.result); // Display the response from server
                     chatHistory.push(query); // Add the query to the history
                 })
                 .catch((error) => {
