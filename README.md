@@ -62,6 +62,14 @@
         .send-button:hover, .voice-button:hover {
             background-color: #45a049;
         }
+        .user-message {
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .server-message {
+            margin: 10px 0;
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -107,9 +115,8 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    console.log(data)
-                    displayMessage(query); // Display the sent message
-                    displayMessage(data.result); // Display the response from server
+                    displayMessage(query, true); // Display the sent message (bold for user)
+                    displayMessage(data.response, false); // Display the response from server
                     chatHistory.push(query); // Add the query to the history
                 })
                 .catch((error) => {
@@ -120,9 +127,10 @@
             }
         }
 
-        function displayMessage(message) {
+        function displayMessage(message, isUser) {
             const chatMessages = document.getElementById('chatMessages');
             const messageElement = document.createElement('div');
+            messageElement.classList.add(isUser ? 'user-message' : 'server-message'); // Add different styles for user and server
             messageElement.textContent = message;
             chatMessages.appendChild(messageElement);
             chatMessages.scrollTop = chatMessages.scrollHeight;
