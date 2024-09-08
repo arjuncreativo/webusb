@@ -159,14 +159,7 @@
                     mediaRecorder.onstop = () => {
                         const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
                         audioChunks = [];
-                        const audioUrl = URL.createObjectURL(audioBlob);
-                        const audio = document.createElement('audio');
-                        audio.src = audioUrl;
-                        audio.controls = true;
-
-                        const chatMessages = document.getElementById('chatMessages');
-                        chatMessages.appendChild(audio);
-                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                        sendAudio(audioBlob); // Send audio to the pharmaAudio API
                     };
                 })
                 .catch(error => {
@@ -178,6 +171,33 @@
             mediaRecorder.stop();
             isRecording = false;
             document.getElementById('voiceButton').textContent = "🎤"; // Change back to mic icon
+        }
+
+        function sendAudio(audioBlob) {
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'voice-note.wav');
+            formData.append('session_id', 'user-1234'); // Hardcoded session ID
+
+            // Send POST request to the pharmaAudio API
+            fetch('http://localhost:5000/pharmaAudio', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const chatMessages = document.getElementById('chatMessages');
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const audioElement = document.createElement('audio');
+                audioElement.src = audioUrl;
+                audioElement.controls = true;
+                chatMessages.appendChild(audioElement);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                displayMessage(data.response, false); // Display the response from server after processing the voice note
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
         }
     </script>
 
